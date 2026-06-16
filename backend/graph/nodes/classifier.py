@@ -135,21 +135,21 @@ async def _llm_classify(query: str, repo_id: str) -> Intent:
         user_message = f"Repository ID: {repo_id}\nQuery: {query}"
 
         # Choose LLM based on available keys (fast model preferred for classifier)
-        if settings.openai_api_key.strip():
+        if settings.gemini_api_key.strip():
+            from langchain_google_genai import ChatGoogleGenerativeAI
+            llm = ChatGoogleGenerativeAI(
+                model="gemini-2.5-flash",
+                temperature=0,
+                google_api_key=settings.gemini_api_key,
+                max_output_tokens=20,
+            )
+        elif settings.openai_api_key.strip():
             from langchain_openai import ChatOpenAI
             llm = ChatOpenAI(
                 model="gpt-4o-mini",
                 temperature=0,
                 openai_api_key=settings.openai_api_key,
                 max_tokens=20,
-            )
-        elif settings.gemini_api_key.strip():
-            from langchain_google_genai import ChatGoogleGenerativeAI
-            llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
-                temperature=0,
-                google_api_key=settings.gemini_api_key,
-                max_output_tokens=20,
             )
         else:
             logger.warning("No LLM key available; defaulting intent to repo_qa")

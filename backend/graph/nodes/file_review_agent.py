@@ -299,15 +299,7 @@ async def _call_review_llm(
     ]
 
     # Select LLM
-    if settings.openai_api_key.strip():
-        from langchain_openai import ChatOpenAI
-        llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.1,          # low temp for consistent structured output
-            openai_api_key=settings.openai_api_key,
-            max_tokens=4096,
-        )
-    elif settings.gemini_api_key.strip():
+    if settings.gemini_api_key.strip():
         from langchain_google_genai import ChatGoogleGenerativeAI
         llm = ChatGoogleGenerativeAI(
             model="gemini-1.5-flash",
@@ -315,10 +307,18 @@ async def _call_review_llm(
             google_api_key=settings.gemini_api_key,
             max_output_tokens=4096,
         )
+    elif settings.openai_api_key.strip():
+        from langchain_openai import ChatOpenAI
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0.1,          # low temp for consistent structured output
+            openai_api_key=settings.openai_api_key,
+            max_tokens=4096,
+        )
     else:
         return _error_review(
             file_path,
-            "No LLM API key configured. Set OPENAI_API_KEY or GEMINI_API_KEY.",
+            "No LLM API key configured. Set GEMINI_API_KEY or OPENAI_API_KEY.",
         )
 
     try:

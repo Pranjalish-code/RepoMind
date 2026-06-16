@@ -225,15 +225,7 @@ async def _call_llm(prompt: str) -> str:
         HumanMessage(content=prompt),
     ]
 
-    if settings.openai_api_key.strip():
-        from langchain_openai import ChatOpenAI
-        llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            temperature=0.1,
-            openai_api_key=settings.openai_api_key,
-            max_tokens=4096,
-        )
-    elif settings.gemini_api_key.strip():
+    if settings.gemini_api_key.strip():
         from langchain_google_genai import ChatGoogleGenerativeAI
         llm = ChatGoogleGenerativeAI(
             model="gemini-1.5-flash",
@@ -241,8 +233,16 @@ async def _call_llm(prompt: str) -> str:
             google_api_key=settings.gemini_api_key,
             max_output_tokens=4096,
         )
+    elif settings.openai_api_key.strip():
+        from langchain_openai import ChatOpenAI
+        llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0.1,
+            openai_api_key=settings.openai_api_key,
+            max_tokens=4096,
+        )
     else:
-        return '{"status":"Needs changes","risk_score":0,"summary":"No LLM API key configured.","issues":[],"final_recommendation":"Set OPENAI_API_KEY or GEMINI_API_KEY."}'
+        return '{"status":"Needs changes","risk_score":0,"summary":"No LLM API key configured.","issues":[],"final_recommendation":"Set GEMINI_API_KEY or OPENAI_API_KEY."}'
 
     try:
         response = await llm.ainvoke(messages)

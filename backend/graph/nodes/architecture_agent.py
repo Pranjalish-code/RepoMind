@@ -82,21 +82,21 @@ async def _call_llm(prompt: str) -> str | None:
         from config import settings
         from langchain_core.messages import HumanMessage, SystemMessage
 
-        if settings.openai_api_key.strip():
-            from langchain_openai import ChatOpenAI
-            llm = ChatOpenAI(
-                model="gpt-4o-mini",
-                temperature=0.1,
-                openai_api_key=settings.openai_api_key,
-                max_tokens=2048,
-            )
-        elif settings.gemini_api_key.strip():
+        if settings.gemini_api_key.strip():
             from langchain_google_genai import ChatGoogleGenerativeAI
             llm = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
                 temperature=0.1,
                 google_api_key=settings.gemini_api_key,
                 max_output_tokens=2048,
+            )
+        elif settings.openai_api_key.strip():
+            from langchain_openai import ChatOpenAI
+            llm = ChatOpenAI(
+                model="gpt-4o-mini",
+                temperature=0.1,
+                openai_api_key=settings.openai_api_key,
+                max_tokens=2048,
             )
         else:
             logger.warning("No LLM key configured — using fallback diagram only")
