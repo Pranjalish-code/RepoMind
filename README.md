@@ -23,6 +23,7 @@ Supported files include:
 * `.md`
 * `.html`
 * `.css`
+* `.java`
 
 Ignored folders/files:
 
