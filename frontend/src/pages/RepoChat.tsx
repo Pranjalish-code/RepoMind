@@ -34,47 +34,45 @@ export default function RepoChat() {
       .finally(() => setLoading(false))
   }, [repoId])
 
-  // Mock fetching file content since we don't have a direct raw file API yet
-  // In a real app, you'd add a GET /repos/{id}/files/{path} endpoint
   const handleFileSelect = async (path: string) => {
-  if (!repoId) return
+    if (!repoId) return
 
-  setSelectedFile(path)
-  setCodeContent('Loading file...')
-  setHighlightLines(undefined)
+    setSelectedFile(path)
+    setCodeContent('Loading file...')
+    setHighlightLines(undefined)
 
-  const file = files.find(f => f.file_path === path)
-  setCodeLanguage(file?.language)
+    const file = files.find(f => f.file_path === path)
+    setCodeLanguage(file?.language)
 
-  try {
-    const data = await getRepoFile(repoId, path)
-    setCodeContent(data.content)
-    setCodeLanguage(data.language || file?.language)
-  } catch (err) {
-    console.error(err)
-    setCodeContent(`// Failed to load file: ${path}`)
+    try {
+      const data = await getRepoFile(repoId, path)
+      setCodeContent(data.content)
+      setCodeLanguage(data.language || file?.language)
+    } catch (err) {
+      console.error(err)
+      setCodeContent(`// Failed to load file: ${path}`)
+    }
   }
-}
 
-const handleCitationClick = async (citation: Citation) => {
-  if (!repoId) return
+  const handleCitationClick = async (citation: Citation) => {
+    if (!repoId) return
 
-  setSelectedFile(citation.file_path)
-  setCodeContent('Loading source...')
-  setHighlightLines([citation.start_line, citation.end_line])
+    setSelectedFile(citation.file_path)
+    setCodeContent('Loading source...')
+    setHighlightLines([citation.start_line, citation.end_line])
 
-  const file = files.find(f => f.file_path === citation.file_path)
-  setCodeLanguage(file?.language)
+    const file = files.find(f => f.file_path === citation.file_path)
+    setCodeLanguage(file?.language)
 
-  try {
-    const data = await getRepoFile(repoId, citation.file_path)
-    setCodeContent(data.content)
-    setCodeLanguage(data.language || file?.language)
-  } catch (err) {
-    console.error(err)
-    setCodeContent(`// Failed to load citation source: ${citation.file_path}`)
+    try {
+      const data = await getRepoFile(repoId, citation.file_path)
+      setCodeContent(data.content)
+      setCodeLanguage(data.language || file?.language)
+    } catch (err) {
+      console.error(err)
+      setCodeContent(`// Failed to load citation source: ${citation.file_path}`)
+    }
   }
-}
 
   if (loading) {
     return (
@@ -85,10 +83,10 @@ const handleCitationClick = async (citation: Citation) => {
   }
 
   return (
-    <div className="flex h-full w-full">
+    <div className="flex h-full w-full bg-surface-950">
       {/* File Tree Sidebar */}
       <div
-        className={`shrink-0 border-r border-surface-600 transition-all duration-300 ease-in-out flex flex-col bg-surface-800 ${
+        className={`shrink-0 border-r border-surface-800 transition-all duration-300 ease-in-out flex flex-col bg-surface-900/50 ${
           treeOpen ? 'w-64 opacity-100' : 'w-0 opacity-0 overflow-hidden'
         }`}
       >
@@ -102,18 +100,18 @@ const handleCitationClick = async (citation: Citation) => {
       {/* Main Content Area */}
       <div className="flex-1 flex min-w-0">
         {/* Chat Window */}
-        <div className="flex-1 flex flex-col min-w-0 border-r border-surface-600">
-          <div className="px-3 py-2 border-b border-surface-600 shrink-0 flex items-center gap-2">
+        <div className="flex-1 flex flex-col min-w-0 border-r border-surface-800 bg-surface-950 relative">
+          <div className="px-4 py-3 border-b border-surface-800 shrink-0 flex items-center gap-3 bg-surface-900/30 backdrop-blur z-10">
             <button
               onClick={() => setTreeOpen(o => !o)}
-              className="text-slate-500 hover:text-white transition-colors"
+              className="text-slate-400 hover:text-brand-400 transition-colors p-1 rounded hover:bg-surface-800"
               title="Toggle sidebar"
             >
-              {treeOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+              {treeOpen ? <PanelLeftClose className="w-4.5 h-4.5" /> : <PanelLeftOpen className="w-4.5 h-4.5" />}
             </button>
-            <span className="text-sm font-medium text-slate-300">Repository QA</span>
+            <span className="text-sm font-medium text-slate-200">Repository QA</span>
           </div>
-          <div className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 relative">
             <ChatWindow
               repoId={repoId!}
               history={history}
@@ -123,7 +121,7 @@ const handleCitationClick = async (citation: Citation) => {
         </div>
 
         {/* Code Viewer */}
-        <div className="w-1/2 shrink-0 bg-surface-900 flex flex-col">
+        <div className="w-[45%] shrink-0 bg-surface-950 flex flex-col">
           <CodeViewer
             filePath={selectedFile}
             content={codeContent}

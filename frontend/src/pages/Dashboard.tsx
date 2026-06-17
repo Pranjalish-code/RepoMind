@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import { Github, Loader2, Search, CheckCircle2, AlertCircle } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { Github, Loader2, Search, CheckCircle2, AlertCircle, Trash2, RefreshCw, Plus, ArrowRight, Code2 } from 'lucide-react'
 import {
   importRepo,
   listRepos,
@@ -15,6 +15,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const navigate = useNavigate()
 
   const fetchRepos = async () => {
     try {
@@ -75,89 +76,104 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-8 max-w-5xl mx-auto w-full">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">Repositories</h1>
-        <p className="text-slate-400">Import GitHub repositories to analyze and review.</p>
+    <div className="flex-1 overflow-y-auto p-8 max-w-6xl mx-auto w-full animate-fade-in">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-100 mb-2 tracking-tight">Repositories</h1>
+          <p className="text-slate-400 font-medium">Manage and index your GitHub workspaces.</p>
+        </div>
       </div>
 
       {/* Import Form */}
-      <div className="card mb-8">
-        <form onSubmit={handleImport} className="flex gap-3">
+      <div className="glass-panel mb-10 p-2">
+        <form onSubmit={handleImport} className="flex items-center gap-3">
           <div className="flex-1 relative">
-            <Github className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <Github className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
             <input
               type="text"
               value={repoUrl}
               onChange={e => setRepoUrl(e.target.value)}
-              placeholder="https://github.com/owner/repo"
-              className="input-field pl-10"
+              placeholder="Paste GitHub repository URL..."
+              className="w-full bg-transparent border-none text-slate-200 placeholder-slate-500 py-3 pl-12 pr-4 focus:outline-none focus:ring-0 text-sm"
               disabled={importing}
             />
           </div>
-          <button type="submit" className="btn-primary" disabled={!repoUrl.trim() || importing}>
-            {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Import'}
+          <button type="submit" className="btn-primary py-2.5 px-6" disabled={!repoUrl.trim() || importing}>
+            {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+            {importing ? 'Importing...' : 'Add Repository'}
           </button>
         </form>
-        {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
+        {error && <div className="px-4 pb-3"><p className="text-rose-400 text-sm font-medium">{error}</p></div>}
       </div>
 
       {/* Repo List */}
       <div className="space-y-4">
         {loading && repos.length === 0 ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="w-6 h-6 animate-spin text-brand-500" />
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
           </div>
         ) : repos.length === 0 ? (
-          <div className="text-center py-12 card border-dashed">
-            <Search className="w-8 h-8 text-slate-500 mx-auto mb-3" />
-            <h3 className="text-white font-medium">No repositories yet</h3>
-            <p className="text-slate-400 text-sm mt-1">Import a repository to get started.</p>
+          <div className="flex flex-col items-center justify-center py-20 px-4 text-center card border-dashed border-surface-700 bg-surface-900/50">
+            <div className="w-16 h-16 bg-surface-800 rounded-full flex items-center justify-center mb-4 border border-surface-700 shadow-sm">
+              <Search className="w-8 h-8 text-slate-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-slate-200 mb-2">No repositories indexed</h3>
+            <p className="text-slate-400 max-w-sm mb-6">Import your first GitHub repository above to start analyzing code, reviewing PRs, and chatting with the codebase.</p>
           </div>
         ) : (
-          repos.map(repo => (
-            <div key={repo.id} className="card hover:border-surface-500 transition-colors flex items-center justify-between group">
-              <div>
-                <Link to={`/repo/${repo.id}/chat`} className="text-lg font-medium text-brand-300 hover:text-brand-200">
-                  {repo.repo_name}
-                </Link>
-                <div className="flex items-center gap-4 mt-1.5 text-sm">
-                  <span className="text-slate-500 font-mono text-xs">{repo.repo_url}</span>
-                  <div className="flex items-center gap-1.5">
-                    {repo.status === 'ready' && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />}
-                    {repo.status === 'indexing' && <Loader2 className="w-3.5 h-3.5 text-brand-400 animate-spin" />}
-                    {repo.status === 'error' && <AlertCircle className="w-3.5 h-3.5 text-red-400" />}
-                    <span className="text-slate-400 capitalize">{repo.status}</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {repos.map(repo => (
+              <div key={repo.id} className="card hover:border-surface-600 transition-all duration-300 flex flex-col group hover:shadow-lg hover:-translate-y-0.5">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3 w-full">
+                    <div className="w-10 h-10 shrink-0 rounded-lg bg-surface-800 border border-surface-700 flex items-center justify-center shadow-sm text-brand-400">
+                      <Code2 className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Link to={`/repo/${repo.id}/chat`} className="text-base font-semibold text-slate-200 group-hover:text-brand-400 transition-colors block truncate">
+                        {repo.repo_name}
+                      </Link>
+                      <span className="text-slate-500 font-mono text-xs truncate block mt-0.5">{repo.repo_url.replace('https://github.com/', '')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-auto pt-4 border-t border-surface-800/50 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {repo.status === 'ready' && <span className="badge badge-green"><CheckCircle2 className="w-3 h-3 mr-1" /> Ready</span>}
+                    {repo.status === 'indexing' && <span className="badge badge-yellow"><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Indexing</span>}
+                    {repo.status === 'error' && <span className="badge badge-red"><AlertCircle className="w-3 h-3 mr-1" /> Error</span>}
+                  </div>
+
+                  <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {repo.status === 'ready' && (
+                      <button
+                        onClick={() => handleIndex(repo.id)}
+                        className="p-1.5 text-slate-400 hover:text-brand-400 hover:bg-brand-500/10 rounded-md transition-colors"
+                        title="Re-index"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                      </button>
+                    )}
+                    <button
+                      onClick={() => handleDelete(repo.id, repo.repo_name)}
+                      className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 rounded-md transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => navigate(`/repo/${repo.id}/chat`)}
+                      className="p-1.5 text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-md transition-colors"
+                      title="Open"
+                    >
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                {repo.status === 'ready' && (
-                  <button
-                    onClick={() => handleIndex(repo.id)}
-                    className="btn-ghost text-xs"
-                  >
-                    Re-index
-                  </button>
-                )}
-
-                <button
-                  onClick={() => handleDelete(repo.id, repo.repo_name)}
-                  className="px-3 py-2 rounded-md text-xs bg-red-600 hover:bg-red-700 text-white"
-                >
-                  Delete
-                </button>
-
-                <Link
-                  to={`/repo/${repo.id}/chat`}
-                  className="btn-primary"
-                >
-                  Open
-                </Link>
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
       </div>
     </div>

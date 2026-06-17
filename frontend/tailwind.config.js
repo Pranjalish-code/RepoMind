@@ -12,29 +12,35 @@ export default {
       },
       colors: {
         brand: {
-          50:  '#f0f4ff',
-          100: '#e0e9ff',
-          200: '#c7d7fe',
-          300: '#a5bcfc',
-          400: '#8098f9',
-          500: '#6172f3',
-          600: '#4e50e7',
-          700: '#3f3ecb',
-          800: '#3435a4',
-          900: '#2f3282',
-          950: '#1c1d4e',
+          50:  '#eef2ff',
+          100: '#e0e7ff',
+          200: '#c7d2fe',
+          300: '#a5b4fc',
+          400: '#818cf8',
+          500: '#6366f1',
+          600: '#4f46e5',
+          700: '#4338ca',
+          800: '#3730a3',
+          900: '#312e81',
+          950: '#1e1b4b',
         },
         surface: {
-          900: '#0f1117',
-          800: '#161b27',
-          700: '#1e2535',
-          600: '#252d3d',
-          500: '#2e3850',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#1e293b', // Elevate surface
+          800: '#0f172a', // Main panels
+          900: '#0b0f19', // Main background
+          950: '#020617', // Super dark
         }
       },
       animation: {
-        'fade-in': 'fadeIn 0.3s ease-out',
-        'slide-up': 'slideUp 0.4s ease-out',
+        'fade-in': 'fadeIn 0.2s ease-out',
+        'fade-in-up': 'fadeInUp 0.3s ease-out',
         'pulse-slow': 'pulse 3s infinite',
       },
       keyframes: {
@@ -42,8 +48,8 @@ export default {
           from: { opacity: '0' },
           to:   { opacity: '1' },
         },
-        slideUp: {
-          from: { transform: 'translateY(16px)', opacity: '0' },
+        fadeInUp: {
+          from: { transform: 'translateY(10px)', opacity: '0' },
           to:   { transform: 'translateY(0)',    opacity: '1' },
         },
       },
