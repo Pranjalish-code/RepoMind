@@ -25,7 +25,8 @@ Graph topology (Step 4 + Step 5 + Step 6 + Step 7)
 Router logic
 ------------
 * If input guardrail blocked (guardrail_result.passed == False) → skip to END.
-* Route on the intent field set by the classifier.
+* If API already sets a valid intent, bypass classifier and route directly.
+* Otherwise route through classifier.
 * pr_review goes through 3-node pipeline.
 * architecture goes through 2-node pipeline.
 
@@ -68,6 +69,8 @@ _ARCH_VALIDATOR   = "mermaid_validator"
 _OFF_TOPIC        = "off_topic"
 _OUTPUT_GUARD     = "output_guardrail"
 
+_VALID_INTENTS = {"repo_qa", "file_review", "pr_review", "architecture", "off_topic"}
+
 
 # ── Router functions ──────────────────────────────────────────────────────────
 
@@ -77,11 +80,24 @@ def _route_after_guardrail(state: AgentState) -> str:
 
     If the guardrail blocked the query, go straight to END — final_response
     is already set and no LLM call should be made.
+
+    If an API endpoint has already set a valid intent, bypass the classifier.
+    This is important for endpoints like:
+      - POST /repos/{repo_id}/file-review
+      - POST /repos/{repo_id}/pulls/{pr_number}/review
+      - POST /repos/{repo_id}/architecture/generate
     """
     result = state.get("guardrail_result", {})
     if not result.get("passed", True):
         logger.debug("Input guardrail blocked — routing to END")
         return END  # type: ignore[return-value]
+
+    intent = state.get("intent")
+    if intent in _VALID_INTENTS:
+        destination = _route_after_classifier(state)
+        logger.debug("Pre-set intent %r — bypassing classifier -> %r", intent, destination)
+        return destination
+
     return _CLASSIFIER
 
 
@@ -89,7 +105,7 @@ def _route_after_classifier(state: AgentState) -> str:
     """
     Conditional edge evaluated after intent_classifier_node.
 
-    Routes on the intent field set by the classifier.
+    Routes on the intent field set by the classifier or API layer.
     """
     intent: str = state.get("intent", "repo_qa")
     route_map: dict[str, str] = {
@@ -127,13 +143,18 @@ def build_graph() -> Any:
     builder.set_entry_point(_INPUT_GUARD)
 
     # ── Edges ──────────────────────────────────────────────────────────────────
-    # input_guardrail → (blocked → END) OR classifier
+    # input_guardrail → (blocked → END) OR classifier OR direct intent node
     builder.add_conditional_edges(
         _INPUT_GUARD,
         _route_after_guardrail,
         {
-            END:         END,
-            _CLASSIFIER: _CLASSIFIER,
+            END:          END,
+            _CLASSIFIER:  _CLASSIFIER,
+            _QA_AGENT:    _QA_AGENT,
+            _FILE_REVIEW: _FILE_REVIEW,
+            _PR_REVIEW:   _PR_REVIEW,
+            _ARCH_AGENT:  _ARCH_AGENT,
+            _OFF_TOPIC:   _OFF_TOPIC,
         },
     )
 

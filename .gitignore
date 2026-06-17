@@ -16,3 +16,7 @@ frontend/.vite
 # OS
 .DS_Store
 .vscode/
+
+# Local Data
+backend/repos/
+*.db

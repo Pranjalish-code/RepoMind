@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { PanelLeftClose, PanelLeftOpen, Loader2 } from 'lucide-react'
-import { getRepo, IndexedFile } from '../api/repoApi'
+import { getRepo, getRepoFile, IndexedFile } from '../api/repoApi'
 import { getChatHistory, Citation } from '../api/chatApi'
 import FileTree from '../components/FileTree'
 import ChatWindow from '../components/ChatWindow'
@@ -36,21 +36,45 @@ export default function RepoChat() {
 
   // Mock fetching file content since we don't have a direct raw file API yet
   // In a real app, you'd add a GET /repos/{id}/files/{path} endpoint
-  const handleFileSelect = (path: string) => {
-    setSelectedFile(path)
-    setCodeContent(`// Viewing: ${path}\n// Content fetching requires a backend endpoint\n// which is currently mocked in the UI.`)
-    setHighlightLines(undefined)
-    const file = files.find(f => f.file_path === path)
-    setCodeLanguage(file?.language)
-  }
+  const handleFileSelect = async (path: string) => {
+  if (!repoId) return
 
-  const handleCitationClick = (citation: Citation) => {
-    setSelectedFile(citation.file_path)
-    setCodeContent(`// Source from citation: ${citation.file_path}\n// Lines: ${citation.start_line}-${citation.end_line}\n\n// Imagine actual code here.`)
-    setHighlightLines([citation.start_line, citation.end_line])
-    const file = files.find(f => f.file_path === citation.file_path)
-    setCodeLanguage(file?.language)
+  setSelectedFile(path)
+  setCodeContent('Loading file...')
+  setHighlightLines(undefined)
+
+  const file = files.find(f => f.file_path === path)
+  setCodeLanguage(file?.language)
+
+  try {
+    const data = await getRepoFile(repoId, path)
+    setCodeContent(data.content)
+    setCodeLanguage(data.language || file?.language)
+  } catch (err) {
+    console.error(err)
+    setCodeContent(`// Failed to load file: ${path}`)
   }
+}
+
+const handleCitationClick = async (citation: Citation) => {
+  if (!repoId) return
+
+  setSelectedFile(citation.file_path)
+  setCodeContent('Loading source...')
+  setHighlightLines([citation.start_line, citation.end_line])
+
+  const file = files.find(f => f.file_path === citation.file_path)
+  setCodeLanguage(file?.language)
+
+  try {
+    const data = await getRepoFile(repoId, citation.file_path)
+    setCodeContent(data.content)
+    setCodeLanguage(data.language || file?.language)
+  } catch (err) {
+    console.error(err)
+    setCodeContent(`// Failed to load citation source: ${citation.file_path}`)
+  }
+}
 
   if (loading) {
     return (

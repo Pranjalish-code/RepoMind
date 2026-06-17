@@ -3,6 +3,7 @@ rag/retriever.py — Semantic search over Qdrant for RepoMind AI.
 
 Key design decisions:
   - Always filters by repo_id payload field → results are repo-scoped.
+  - Optionally filters by file_path → used for exact file review.
   - Retrieval is synchronous; call via asyncio.to_thread() from async context.
   - The full chunk content is stored in the Qdrant payload by the indexer.
   - Uses Qdrant query_points() instead of deprecated/removed search().
@@ -48,6 +49,7 @@ def search_codebase_sync(
     embedding_model: EmbeddingModel,
     qdrant_client: QdrantClient,
     limit: int = 10,
+    file_path: str | None = None,
 ) -> list[SearchResult]:
     """
     Semantic search over a repository's Qdrant collection.
@@ -58,6 +60,7 @@ def search_codebase_sync(
         embedding_model: LangChain-compatible embedding model.
         qdrant_client: Connected Qdrant client.
         limit: Maximum results to return.
+        file_path: Optional exact repository file path to restrict results.
 
     Returns:
         List of SearchResult objects ordered by similarity score.
@@ -82,14 +85,22 @@ def search_codebase_sync(
     if not query_vector:
         raise RuntimeError("Query embedding returned an empty vector.")
 
-    repo_filter = qmodels.Filter(
-        must=[
+    must_conditions = [
+        qmodels.FieldCondition(
+            key="repo_id",
+            match=qmodels.MatchValue(value=repo_id),
+        )
+    ]
+
+    if file_path:
+        must_conditions.append(
             qmodels.FieldCondition(
-                key="repo_id",
-                match=qmodels.MatchValue(value=repo_id),
+                key="file_path",
+                match=qmodels.MatchValue(value=file_path),
             )
-        ]
-    )
+        )
+
+    repo_filter = qmodels.Filter(must=must_conditions)
 
     try:
         response = qdrant_client.query_points(
@@ -145,10 +156,11 @@ def search_codebase_sync(
         )
 
     logger.info(
-        "Search for repo %s returned %d results query=%r",
+        "Search for repo %s returned %d results query=%r file_path=%r",
         repo_id,
         len(results),
         query[:80],
+        file_path,
     )
 
     return results

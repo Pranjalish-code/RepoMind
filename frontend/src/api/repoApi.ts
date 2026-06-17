@@ -64,12 +64,33 @@ export async function getRepo(repoId: string): Promise<Repository & { indexed_fi
 }
 
 /** Trigger RAG indexing for a repository */
-export async function indexRepo(repoId: string): Promise<{ status: string; message: string }> {
-  return apiFetch(`/repos/${repoId}/index`, { method: 'POST' })
+export async function indexRepo(
+  repoId: string,
+  force: boolean = true
+): Promise<{ status: string; message: string }> {
+  return apiFetch(`/repos/${repoId}/index`, {
+    method: 'POST',
+    body: JSON.stringify({ force }),
+  })
 }
 
 /** List indexed files for a repository */
 export async function listIndexedFiles(repoId: string): Promise<IndexedFile[]> {
   const repo = await getRepo(repoId)
   return repo.indexed_files ?? []
+}
+export interface RepoFileResponse {
+  repo_id: string
+  file_path: string
+  language?: string
+  content: string
+}
+
+export async function getRepoFile(
+  repoId: string,
+  path: string
+): Promise<RepoFileResponse> {
+  return apiFetch<RepoFileResponse>(
+    `/repos/${repoId}/file?path=${encodeURIComponent(path)}`
+  )
 }

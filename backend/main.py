@@ -209,6 +209,7 @@ def create_app() -> FastAPI:
             ".md",
             ".html",
             ".css",
+            ".java",
         }
 
         if file_path.suffix.lower() not in allowed_extensions:

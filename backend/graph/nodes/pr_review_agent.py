@@ -228,7 +228,7 @@ async def _call_llm(prompt: str) -> str:
     if settings.gemini_api_key.strip():
         from langchain_google_genai import ChatGoogleGenerativeAI
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             temperature=0.1,
             google_api_key=settings.gemini_api_key,
             max_output_tokens=4096,

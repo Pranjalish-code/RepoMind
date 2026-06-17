@@ -302,7 +302,7 @@ async def _call_review_llm(
     if settings.gemini_api_key.strip():
         from langchain_google_genai import ChatGoogleGenerativeAI
         llm = ChatGoogleGenerativeAI(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             temperature=0.1,
             google_api_key=settings.gemini_api_key,
             max_output_tokens=4096,
@@ -497,7 +497,11 @@ async def file_review_agent_node(state: AgentState) -> dict[str, Any]:
         selected_file   — echoed back (normalised POSIX path)
         error           — error message string or None
     """
-    selected_file: str | None = state.get("selected_file")
+    selected_file: str | None = (
+    state.get("selected_file")
+    or state.get("file_path")
+    or state.get("file")
+    )
     query: str = state.get("query", "Review this file for bugs and issues.").strip()
     repo_id: str = state.get("repo_id", "")
 
