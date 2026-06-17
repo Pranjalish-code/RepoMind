@@ -27,7 +27,7 @@ export default function RepoChat() {
       getChatHistory(repoId),
     ])
       .then(([repo, hist]) => {
-        setFiles(repo.indexed_files || [])
+        setFiles(repo.files || [])
         setHistory(hist)
       })
       .catch(err => console.error(err))

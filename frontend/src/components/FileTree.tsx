@@ -16,38 +16,47 @@ interface FileTreeProps {
 }
 
 function buildTree(files: { file_path: string; language: string }[]): TreeNode[] {
-  const root: Record<string, TreeNode> = {}
+  const root: TreeNode[] = []
 
   for (const f of files) {
-    const parts = f.file_path.split('/')
-    let current = root
+    const parts = f.file_path.replace(/\\/g, '/').split('/')
+    let currentLevel = root
 
     parts.forEach((part, i) => {
       const isFile = i === parts.length - 1
       const key = parts.slice(0, i + 1).join('/')
 
-      if (!current[part]) {
-        current[part] = {
+      let existingNode = currentLevel.find(node => node.name === part)
+
+      if (!existingNode) {
+        existingNode = {
           name: part,
           path: key,
           type: isFile ? 'file' : 'dir',
           language: isFile ? f.language : undefined,
           children: isFile ? undefined : [],
         }
+        currentLevel.push(existingNode)
       }
+
       if (!isFile) {
-        current = current[part].children!.reduce((acc, c) => {
-          acc[c.name] = c
-          return acc
-        }, {} as Record<string, TreeNode>)
+        currentLevel = existingNode.children!
       }
     })
   }
 
-  return Object.values(root).sort((a, b) => {
-    if (a.type !== b.type) return a.type === 'dir' ? -1 : 1
-    return a.name.localeCompare(b.name)
-  })
+  const sortNodes = (nodes: TreeNode[]) => {
+    nodes.sort((a, b) => {
+      if (a.type !== b.type) return a.type === 'dir' ? -1 : 1
+      return a.name.localeCompare(b.name)
+    })
+    nodes.forEach(node => {
+      if (node.children) sortNodes(node.children)
+    })
+  }
+  
+  sortNodes(root)
+  return root
 }
 
 function FileIcon({ language }: { language?: string }) {

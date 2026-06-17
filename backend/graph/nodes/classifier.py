@@ -80,12 +80,10 @@ _ARCH_PATTERNS: list[re.Pattern[str]] = [re.compile(p, re.IGNORECASE) for p in [
 
 _FILE_REVIEW_PATTERNS: list[re.Pattern[str]] = [re.compile(p, re.IGNORECASE) for p in [
     r"\breview\s+.+\.(py|ts|js|go|java|rs|cpp|c|cs|rb|kt)\b",
-    r"\banalyze?\s+.+\.(py|ts|js|go|java|rs|cpp|c|cs|rb|kt)\b",
-    r"\bexplain\s+.+\.(py|ts|js|go|java|rs|cpp|c|cs|rb|kt)\b",
+    r"\baudit\s+.+\.(py|ts|js|go|java|rs|cpp|c|cs|rb|kt)\b",
     r"\bwhat('s|\s+is)\s+wrong\s+with\s+.+\.(py|ts|js|go|java|rs|cpp|c|cs|rb|kt)\b",
     r"\bcheck\s+.+\.(py|ts|js|go|java|rs|cpp|c|cs|rb|kt)\b",
 ]]
-
 # Extract PR number from query
 _PR_NUMBER_RE = re.compile(r"(?:pr|pull\s*request)\s*#?(\d+)", re.IGNORECASE)
 
@@ -179,35 +177,37 @@ async def _llm_classify(query: str, repo_id: str) -> Intent:
 # ── Node ──────────────────────────────────────────────────────────────────────
 
 async def intent_classifier_node(state: AgentState) -> dict[str, Any]:
-    """
-    LangGraph node: classify the user query into an intent label.
-
-    Strategy:
-      1. Run fast heuristics (no API call).
-      2. If heuristics are inconclusive, call LLM.
-
-    Also extracts pr_number when intent == 'pr_review'.
-    """
     query: str = state.get("query", "").strip()
     repo_id: str = state.get("repo_id", "")
+    selected_file = state.get("selected_file")
 
-    # 1. Heuristic pass
+    if selected_file:
+        return {
+            "intent": "file_review",
+            "selected_file": selected_file,
+            "pr_number": None,
+        }
+
     intent = _heuristic_classify(query)
 
-    # 2. LLM fallback
+    if intent == "file_review":
+        intent = "repo_qa"
+
     if intent is None:
         logger.debug("Heuristics inconclusive; calling LLM classifier")
         intent = await _llm_classify(query, repo_id)
+
+    if intent == "file_review":
+        intent = "repo_qa"
 
     logger.info("Classified query as intent=%r (query=%r)", intent, query[:80])
 
     update: dict[str, Any] = {
         "intent": intent,
         "pr_number": None,
-        "selected_file": None,
+        "selected_file": selected_file,
     }
 
-    # Extract PR number when relevant
     if intent == "pr_review":
         update["pr_number"] = _extract_pr_number(query)
 

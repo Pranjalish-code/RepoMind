@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Github, Loader2, Search, CheckCircle2, AlertCircle } from 'lucide-react'
-import { importRepo, listRepos, indexRepo, Repository } from '../api/repoApi'
+import {
+  importRepo,
+  listRepos,
+  indexRepo,
+  deleteRepo,
+  Repository
+} from '../api/repoApi'
 
 export default function Dashboard() {
   const [repoUrl, setRepoUrl] = useState('')
@@ -47,6 +53,21 @@ export default function Dashboard() {
   const handleIndex = async (repoId: string) => {
     try {
       await indexRepo(repoId)
+      await fetchRepos()
+    } catch (err) {
+      alert((err as Error).message)
+    }
+  }
+
+  const handleDelete = async (repoId: string, repoName: string) => {
+    const confirmed = window.confirm(
+      `Delete repository "${repoName}"?\n\nThis will remove:\n- Local clone\n- Qdrant vectors\n- Database records`
+    )
+
+    if (!confirmed) return
+
+    try {
+      await deleteRepo(repoId)
       await fetchRepos()
     } catch (err) {
       alert((err as Error).message)
@@ -113,11 +134,25 @@ export default function Dashboard() {
 
               <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                 {repo.status === 'ready' && (
-                  <button onClick={() => handleIndex(repo.id)} className="btn-ghost text-xs">
+                  <button
+                    onClick={() => handleIndex(repo.id)}
+                    className="btn-ghost text-xs"
+                  >
                     Re-index
                   </button>
                 )}
-                <Link to={`/repo/${repo.id}/chat`} className="btn-primary">
+
+                <button
+                  onClick={() => handleDelete(repo.id, repo.repo_name)}
+                  className="px-3 py-2 rounded-md text-xs bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Delete
+                </button>
+
+                <Link
+                  to={`/repo/${repo.id}/chat`}
+                  className="btn-primary"
+                >
                   Open
                 </Link>
               </div>

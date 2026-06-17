@@ -773,7 +773,50 @@ async def file_review(
         final_recommendation=draft_review.get("final_recommendation", ""),
         formatted_review=final_response,
     )
+@router.delete(
+    "/{repo_id}",
+    summary="Delete an imported repository",
+)
+async def delete_repo(
+    repo_id: str,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> dict:
+    repo = await get_repository(db, repo_id)
+    if repo is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f"Repository '{repo_id}' not found.")
 
+    local_path = repo.local_path
+
+    # delete Qdrant collection
+    try:
+        from rag.vectorstore import get_qdrant_client, collection_name_for
+        qdrant_client = get_qdrant_client()
+        col = collection_name_for(repo_id)
+        qdrant_client.delete_collection(collection_name=col)
+    except Exception as exc:
+        logger.warning("Could not delete Qdrant collection for repo %s: %s", repo_id, exc)
+
+    # delete local clone
+    if local_path:
+        try:
+            remove_clone(local_path)
+        except Exception as exc:
+            logger.warning("Could not delete local clone for repo %s: %s", repo_id, exc)
+
+    # delete DB rows
+    try:
+        await delete_code_chunks_for_repo(db, repo_id)
+        await db.delete(repo)
+        await db.commit()
+    except Exception as exc:
+        await db.rollback()
+        logger.exception("Failed to delete repo %s", repo_id)
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Delete failed: {exc}")
+
+    return {
+        "repo_id": repo_id,
+        "message": "Repository deleted successfully."
+    }
 
 # ══════════════════════════════════════════════════════════════════════════════
 # PR Review Schemas

@@ -59,7 +59,7 @@ export async function listRepos(): Promise<Repository[]> {
 }
 
 /** Get a single repository with indexed files */
-export async function getRepo(repoId: string): Promise<Repository & { indexed_files: IndexedFile[] }> {
+export async function getRepo(repoId: string): Promise<Repository & { files: IndexedFile[] }> {
   return apiFetch(`/repos/${repoId}`)
 }
 
@@ -77,7 +77,7 @@ export async function indexRepo(
 /** List indexed files for a repository */
 export async function listIndexedFiles(repoId: string): Promise<IndexedFile[]> {
   const repo = await getRepo(repoId)
-  return repo.indexed_files ?? []
+  return repo.files ?? []
 }
 export interface RepoFileResponse {
   repo_id: string
@@ -93,4 +93,10 @@ export async function getRepoFile(
   return apiFetch<RepoFileResponse>(
     `/repos/${repoId}/file?path=${encodeURIComponent(path)}`
   )
+}
+
+export async function deleteRepo(repoId: string): Promise<{ repo_id: string; message: string }> {
+  return apiFetch(`/repos/${repoId}`, {
+    method: 'DELETE',
+  })
 }
